@@ -108,4 +108,17 @@ def generate_inits(amd_e,amd_I,g1_frac=None,s1_frac=None):
     state[9]  = phi[5]
     state[10] = psi[5]
 
-    return state,uforced,vforced,ufree,vfree
+    return state
+
+def run_integration(ig,y0,Tfin,Nout,outfile="output"):
+    Nsteps_between_out = int(np.ceil(Tfin/Nout/ig.dt))
+    ytraj = np.zeros((Nout,y0.shape[0]))
+    time = np.zeros(Nout)
+    y=y0.copy()
+    for i in xrange(Nout):
+        ytraj[i] = y
+        time[i] = i * Nsteps_between_out * ig.dt
+        np.savez(outfile,trajectory=ytraj,time=time)
+        for _ in xrange(Nsteps_between_out):
+            y = ig.rk_step(y)
+
