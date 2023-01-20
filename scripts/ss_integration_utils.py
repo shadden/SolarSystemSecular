@@ -5,6 +5,7 @@ from celmech.miscellaneous import _machine_eps
 import pickle
 _TOPDIR="/fs/lustre/cita/hadden/01_solar_system_secular/SolarSystemSecular/"
 #_TOPDIR="/cita/h/home-2/hadden/Projects/05_SolarSystemSecular/"
+_TOPDIR="/Users/shadden/Papers/43_SolarSystemSecular/"
 _DEFAULT_SOURCE = _TOPDIR+"scripts/"
 _DEFAULT_SOURCE += "secular_hamiltonian_4th_order.pkl"
 
