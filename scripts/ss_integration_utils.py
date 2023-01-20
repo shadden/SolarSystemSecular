@@ -3,8 +3,8 @@ import numpy as np
 from celmech.rk_integrator import RKIntegrator
 from celmech.miscellaneous import _machine_eps
 import pickle
-_TOPDIR="/fs/lustre/cita/hadden/01_solar_system_secular/SolarSystemSecular/"
-#_TOPDIR="/cita/h/home-2/hadden/Projects/05_SolarSystemSecular/"
+_TOPDIR="/home/hadden/projects/08_solar_system_chaos/SolarSystemSecular/"
+#_TOPDIR="/fs/lustre/cita/hadden/01_solar_system_secular/SolarSystemSecular/"
 _DEFAULT_SOURCE = _TOPDIR+"scripts/"
 _DEFAULT_SOURCE += "secular_hamiltonian_4th_order.pkl"
 
@@ -59,6 +59,39 @@ def get_samples(n):
     y[n-1] = 1 - xs[-1]
     return y
 
+def state_data_to_modes(state):
+    Se_terr = Se_full[:4,:4]
+    SI_terr = SI_full[:4,:4]
+    De,Te = np.linalg.eigh(Se_terr)
+    DI,TI = np.linalg.eigh(SI_terr)
+    phi = np.zeros(8)
+    psi = np.zeros(8)
+    phi[4] = state[8]
+    phi[5] = state[9]
+    psi[5] = state[10]
+    x = np.zeros(4,dtype=np.complex128)
+    y = np.zeros(4,dtype=np.complex128)
+    for i in range(4):
+        x[i] = state[2*i+11] - 1j * state[2*i]
+        y[i] = state[2*i+12] - 1j * state[2*i+1]
+    x /= np.sqrt(2)
+    y /= np.sqrt(2)
+    utot = Te.T @ x
+    vtot = TI.T @ y
+    # Calculate forced u and v
+    scale = np.diag(np.sqrt(0.5 * L0s[4:]))
+    _ = np.transpose([Se_full[:4,4:] @ scale @ Smatrix_e[4:,i] for i in range(4,8)])
+    bprime_e = np.transpose(Te.T @ _)
+    uforced = np.sum([-1 * bprime_e[i] * np.exp(1j * phi[4 + i]) / (gvec[4 + i] + De) for i in range(2)],axis=0)
+
+    _ = np.transpose([SI_full[:4,4:] @ (2*scale) @ Smatrix_I[4:,i] for i in range(4,8)])
+    bprime_I = np.transpose(TI.T @ _)
+    vforced = np.sum([-1 * bprime_I[i] * np.exp(1j * psi[4 + i]) / (svec[4 + i] + DI) for i in range(2)],axis=0)
+
+    ufree = utot - uforced
+    vfree = vtot - vforced
+    return ufree, vfree
+    
 def generate_inits(amd_e,amd_I,g1_frac=None,s1_frac=None):
     Se_terr = Se_full[:4,:4]
     SI_terr = SI_full[:4,:4]
